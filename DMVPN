@@ -1,0 +1,309 @@
+Building configuration...
+
+Current configuration : 8107 bytes
+!
+! Last configuration change at 17:03:57 UTC Thu Jul 24 2025 by altros
+! NVRAM config last updated at 16:53:56 UTC Thu Jul 24 2025 by altros
+!
+version 15.0
+service config
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+!
+hostname R-CoLo-BGR
+!
+boot-start-marker
+boot-end-marker
+!
+enable secret level 9 5 $1$wW1x$hXpo0pj.SBZL4c7H4rYwA0
+enable secret 5 $1$FCdf$MPFTFLHpjwSQdNVrF2ceB0
+!
+aaa new-model
+!
+aaa user profile altros
+ aaa attribute clid 1
+!
+!
+!
+!
+!
+!
+aaa session-id common
+!
+!
+!
+clock timezone UTC 8
+!
+no ipv6 cef
+ip source-route
+ip cef
+!
+!
+!
+ip dhcp pool CLS-Aviro
+   network 100.2.1.0 255.255.255.0
+   default-router 100.2.1.1
+   dns-server 8.8.8.8 8.8.4.4
+!
+ip dhcp pool CLS-Altros
+   network 100.1.1.0 255.255.255.0
+   default-router 100.1.1.1
+   dns-server 8.8.8.8 8.8.4.4
+!
+ip dhcp pool CLS-Funtravia
+   network 100.3.1.0 255.255.255.0
+   default-router 100.3.1.1
+   dns-server 8.8.8.8 8.8.4.4
+!
+ip dhcp pool Management
+   network 100.11.1.0 255.255.255.0
+   default-router 100.11.1.1
+   dns-server 8.8.8.8 8.8.4.4
+!
+!
+no ip domain lookup
+ip domain name www.altros.co.id
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+license udi pid CISCO2921/K9 sn FTX1530ALMV
+!
+!
+username altros privilege 15 secret 5 $1$qQmd$fIdoYJn3QBNO.BeMe9IqC.
+username cisco privilege 15 secret 5 $1$1FSO$LNXOyGjIZzXMRgQGhT7qR0
+!
+redundancy
+!
+!
+ip ssh version 2
+!
+!
+crypto isakmp policy 1
+ encr 3des
+ hash md5
+ authentication pre-share
+ group 2
+crypto isakmp key AltrosKey address 0.0.0.0 0.0.0.0
+!
+!
+crypto ipsec transform-set TS esp-3des esp-md5-hmac
+crypto ipsec transform-set MY_TRANSFORM_SET esp-aes 256 esp-sha-hmac
+!
+crypto ipsec profile protect-gre
+ set security-association lifetime seconds 86400
+ set transform-set TS
+!
+!
+crypto map CRYPTO-ALT 10 ipsec-isakmp
+ ! Incomplete
+ set peer 202.151.14.6
+ set transform-set MY_TRANSFORM_SET
+!
+!
+!
+!
+!
+interface Tunnel0
+ description mGRE - DMVPN Tunnel
+ ip address 172.16.0.1 255.255.255.0
+ no ip redirects
+ ip nhrp authentication firewall
+ ip nhrp map multicast dynamic
+ ip nhrp network-id 1
+ tunnel source 202.151.14.1
+ tunnel mode gre multipoint
+ tunnel protection ipsec profile protect-gre
+ !
+!
+interface GigabitEthernet0/0
+ no ip address
+ ip nat inside
+ ip virtual-reassembly
+ duplex auto
+ speed 1000
+ crypto map CRYPTO-ALT
+ !
+!
+interface GigabitEthernet0/0.101
+ description Segment Colo-Altros
+ encapsulation dot1Q 101
+ ip address 100.1.1.1 255.255.255.0
+ ip nat inside
+ ip virtual-reassembly
+!
+interface GigabitEthernet0/0.102
+ description Segment Colo-Aviro
+ encapsulation dot1Q 102
+ ip address 100.2.1.1 255.255.255.0
+ ip nat inside
+ ip virtual-reassembly
+!
+interface GigabitEthernet0/0.103
+ description Segment Colo-Funtravia
+ encapsulation dot1Q 103
+ ip address 100.3.1.1 255.255.255.0
+ ip nat inside
+ ip virtual-reassembly
+!
+interface GigabitEthernet0/0.104
+ description Segment Colo-Fiture
+ encapsulation dot1Q 104
+ ip address 100.4.1.1 255.255.255.0
+ ip nat inside
+ ip virtual-reassembly
+!
+interface GigabitEthernet0/0.110
+ description Segment Server Altros Production
+ encapsulation dot1Q 110
+ ip address 100.10.1.1 255.255.255.0
+ ip nat inside
+ ip virtual-reassembly
+!
+interface GigabitEthernet0/0.111
+ description vlan Management
+ encapsulation dot1Q 111
+ ip address 100.11.1.1 255.255.255.0
+ ip nat inside
+ ip virtual-reassembly
+!
+interface GigabitEthernet0/0.112
+ encapsulation dot1Q 112
+ ip address 100.112.1.1 255.255.255.0
+ ip nat inside
+ ip virtual-reassembly
+!
+interface GigabitEthernet0/1
+ description *to Public*
+ ip address 202.151.14.1 255.255.255.248
+ ip nat outside
+ ip virtual-reassembly
+ duplex auto
+ speed auto
+ !
+!
+interface GigabitEthernet0/2
+ no ip address
+ ip nat inside
+ ip virtual-reassembly
+ duplex auto
+ speed auto
+ !
+!
+interface Virtual-Template1
+ no ip address
+ !
+!
+interface Virtual-Template2
+ no ip address
+ !
+!
+interface Async0/0/0
+ no ip address
+ encapsulation slip
+ !
+!
+!
+router eigrp 100
+ network 100.1.1.0 0.0.0.255
+ network 100.2.1.0 0.0.0.255
+ network 100.3.1.0 0.0.0.255
+ network 100.4.1.0 0.0.0.255
+ network 100.10.1.0 0.0.0.255
+ network 100.11.1.0 0.0.0.255
+ network 169.254.1.0 0.0.0.255
+ network 172.16.0.0 0.0.0.255
+!
+ip forward-protocol nd
+!
+no ip http server
+no ip http secure-server
+!
+ip nat source static tcp 100.11.1.2 21 202.151.14.1 4001 extendable
+ip nat source static tcp 100.2.1.249 22 202.151.14.3 6775 extendable
+ip nat inside source list Internet interface GigabitEthernet0/1 overload
+ip nat inside source static tcp 100.4.1.12 80 202.151.14.2 80 extendable
+ip nat inside source static tcp 100.4.1.10 80 202.151.14.2 82 extendable
+ip nat inside source static tcp 100.4.1.12 111 202.151.14.2 111 extendable
+ip nat inside source static tcp 100.4.1.12 443 202.151.14.2 443 extendable
+ip nat inside source static tcp 100.4.1.10 443 202.151.14.2 445 extendable
+ip nat inside source static tcp 100.4.1.16 80 202.151.14.2 2380 extendable
+ip nat inside source static tcp 100.4.1.16 443 202.151.14.2 4431 extendable
+ip nat inside source static tcp 100.4.1.12 8080 202.151.14.2 8080 extendable
+ip nat inside source static tcp 100.4.1.12 22 202.151.14.5 505 extendable
+ip nat inside source static tcp 100.4.1.12 23 202.151.14.5 506 extendable
+ip nat inside source static tcp 100.11.1.12 443 202.151.14.5 5000 extendable
+ip nat inside source static tcp 100.11.1.11 443 202.151.14.5 7000 extendable
+ip nat inside source static tcp 100.1.1.10 3389 202.151.14.5 7002 extendable
+ip nat inside source static tcp 100.4.1.10 22 202.151.14.5 7003 extendable
+ip nat inside source static tcp 100.4.1.15 22 202.151.14.5 7005 extendable
+ip nat inside source static tcp 100.4.1.11 22 202.151.14.5 7006 extendable
+ip nat inside source static tcp 100.4.1.17 22 202.151.14.5 7008 extendable
+ip nat inside source static tcp 100.4.1.17 443 202.151.14.5 7009 extendable
+ip nat inside source static tcp 100.4.1.13 22 202.151.14.5 7010 extendable
+ip nat inside source static tcp 100.4.1.13 23 202.151.14.5 7011 extendable
+ip nat inside source static tcp 100.1.1.100 443 202.151.14.5 7012 extendable
+ip nat inside source static tcp 100.1.1.100 22 202.151.14.5 7013 extendable
+ip nat inside source static tcp 100.4.1.16 22 202.151.14.5 7014 extendable
+ip nat inside source static tcp 100.1.1.18 22 202.151.14.5 7171 extendable
+ip nat inside source static tcp 100.2.1.199 8291 202.151.14.5 7578 extendable
+ip nat inside source static tcp 100.2.1.246 3389 202.151.14.5 7777 extendable
+ip nat inside source static tcp 100.2.1.249 3389 202.151.14.5 7778 extendable
+ip nat inside source static tcp 100.2.1.178 3389 202.151.14.5 7779 extendable
+ip nat inside source static tcp 100.2.1.250 22 202.151.14.5 7877 extendable
+ip nat inside source static tcp 100.2.1.250 443 202.151.14.5 7878 extendable
+ip nat inside source static tcp 100.1.1.100 22 202.151.14.5 7978 extendable
+ip nat inside source static tcp 100.1.1.19 443 202.151.14.5 7979 extendable
+ip nat inside source static tcp 100.1.1.19 80 202.151.14.5 7980 extendable
+ip nat inside source static tcp 100.11.1.3 443 202.151.14.5 7981 extendable
+ip nat inside source static tcp 100.11.1.3 22 202.151.14.5 7988 extendable
+ip nat inside source static tcp 100.1.1.18 8000 202.151.14.5 8000 extendable
+ip nat inside source static tcp 100.1.1.18 8081 202.151.14.5 8081 extendable
+ip nat inside source static tcp 100.1.1.18 9443 202.151.14.5 9443 extendable
+ip route 0.0.0.0 0.0.0.0 202.151.14.6
+!
+ip access-list extended Internet
+ permit ip 100.11.1.0 0.0.0.255 any
+ permit ip 100.4.1.0 0.0.0.255 any
+ permit ip 100.3.1.0 0.0.0.255 any
+ permit ip 100.2.1.0 0.0.0.255 any
+ permit ip 100.1.1.0 0.0.0.255 any
+ permit ip 100.12.1.0 0.0.0.255 any
+ deny   ip any any
+!
+logging trap debugging
+logging origin-id ip
+logging host 10.1.1.193 transport udp port 515
+!
+!
+!
+!
+!
+!
+control-plane
+ !
+!
+!
+line con 0
+line aux 0
+line 0/0/0
+ stopbits 1
+ speed 115200
+ flowcontrol hardware
+line vty 0 4
+ privilege level 15
+ password p@ssw0rd
+ transport input all
+line vty 5 20
+ privilege level 15
+ transport input all
+!
+scheduler allocate 20000 1000
+ntp server 202.154.59.226
+sntp server 203.89.31.12 version 2
+sntp broadcast client
+end
+
